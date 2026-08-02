@@ -106,7 +106,6 @@ class OC_User_ISPCONFIG extends ISPConfig_SOAP
   public function checkPassword($uid, $password)
   {
     if (!class_exists("SoapClient")) {
-      /** @noinspection PhpDeprecationInspection */
       $this->logger()->error('ERROR: PHP soap extension is not installed or not enabled', ['app' => 'user_ispconfig']);
       return false;
     }
@@ -300,7 +299,6 @@ class OC_User_ISPCONFIG extends ISPConfig_SOAP
     $mailuser = $this->getMailuserByMailbox($user->getMailbox(), $user->getDomain());
     if (is_array($mailuser) && count($mailuser)) {
       $result = ISPDomainUser::fromMailuserIfPasswordMatch($user->getUid(), $password, $mailuser);
-      /** @noinspection PhpDeprecationInspection */
       $this->logger()->debug("Login result for $user: $result", ['app' => 'user_ispconfig']);
       return $result;
     }
@@ -327,7 +325,6 @@ class OC_User_ISPCONFIG extends ISPConfig_SOAP
           return false;
         }
       }
-      /** @noinspection PhpDeprecationInspection */
       $this->logger()->debug("Login result for $uid: $domainuser", ['app' => 'user_ispconfig']);
       return $domainuser;
     }
