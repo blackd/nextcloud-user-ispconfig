@@ -57,8 +57,7 @@ abstract class Base extends ABackend implements
 	 */
 	private function databaseConnection()
 	{
-		return \OC::$server->getDatabaseConnection();
-		// (min NC25) return \OCP\Server::get(\OCP\IDBConnection::class);
+		return \OCP\Server::get(\OCP\IDBConnection::class);
 	}
 
 	/**
@@ -75,26 +74,10 @@ abstract class Base extends ABackend implements
 	 *
 	 * @param string $uid The username of the user to delete
 	 * @return bool
-	 * @throws \OC\DatabaseException
 	 */
 	public function deleteUser($uid)
 	{
 		$query = $this->query();
-
-		$query
-			->delete('accounts')
-			->where($query->expr()->eq('uid', $query->createNamedParameter($uid)))
-			->executeStatement();
-
-		$query
-			->delete('preferences')
-			->where($query->expr()->eq('userid', $query->createNamedParameter($uid)))
-			->executeStatement();
-
-		$query
-			->delete('group_user')
-			->where($query->expr()->eq('uid', $query->createNamedParameter($uid)))
-			->executeStatement();
 
 		$query
 			->delete('users_ispconfig')
@@ -297,26 +280,34 @@ abstract class Base extends ABackend implements
 			])
 			->executeStatement();
 
-		$this->setInitialUserProfile($uid, "$mailbox@$domain", $displayname);
+		// From this point on the user is known to Nextcloud (it is found in
+		// the app's table), so the official user services can be used.
+		$user = \OCP\Server::get(\OCP\IUserManager::class)->get($uid);
+		if ($user !== null)
+			$user->setSystemEMailAddress("$mailbox@$domain");
 
-		if ($quota)
-			$this->setUserPreference($uid, 'files', 'quota', $quota);
+		if ($quota && $user !== null)
+			$user->setQuota($quota);
 
 		if ($groups)
 		{
+			$groupManager = \OCP\Server::get(\OCP\IGroupManager::class);
 			foreach ($groups AS $gid)
 			{
-				$this->addUserToGroup($uid, $gid);
+				$group = $groupManager->createGroup($gid);
+				if ($group !== null && $user !== null)
+					$group->addUser($user);
 			}
 		}
 
 		if ($preferences)
 		{
+			$config = \OCP\Server::get(\OCP\IConfig::class);
 			foreach ($preferences AS $app => $options)
 			{
 				foreach ($options AS $configkey => $value)
 				{
-					$this->setUserPreference($uid, $app, $configkey, $value);
+					$config->setUserValue($uid, $app, $configkey, $value);
 				}
 			}
 		}
@@ -346,120 +337,4 @@ abstract class Base extends ABackend implements
 		return $users > 0;
 	}
 
-	/**
-	 * @param string $uid the username
-	 * @param string $appid app to save the preference for
-	 * @param string $configkey config key to set
-	 * @param string $value value to save for the users preference
-	 * @throws \OC\DatabaseException
-	 */
-	private function setUserPreference($uid, $appid, $configkey, $value)
-	{
-		$query = $this->query();
-
-		$query
-			->insert('preferences')
-			->values([
-				'userid' => $query->createNamedParameter($uid),
-				'appid' => $query->createNamedParameter($appid),
-				'configkey' => $query->createNamedParameter($configkey),
-				'configvalue' => $query->createNamedParameter($value),
-			])
-			->executeStatement();
-	}
-
-	/**
-	 * Add user to group
-	 *
-	 * @param string $uid the username
-	 * @param string $gid the groupname
-	 * @throws \OC\DatabaseException
-	 */
-	protected function addUserToGroup($uid, $gid)
-	{
-		$query = $this->query();
-
-		$result = $query
-			->select($query->func()->count('*'))
-			->from('groups')
-			->where($query->expr()->eq('gid', $query->createNamedParameter($gid)))
-			->executeQuery();
-
-		if ($result->fetchOne() == 0)
-		{
-			$query
-				->insert('groups')
-				->values([
-					'gid' => $query->createNamedParameter($gid),
-					'displayname' => $query->createNamedParameter($gid),
-				])
-				->executeStatement();
-		}
-		$result->closeCursor();
-
-		$query
-			->insert('group_user')
-			->values([
-				'gid' => $query->createNamedParameter($gid),
-				'uid' => $query->createNamedParameter($uid),
-			])
-			->executeStatement();
-	}
-
-	/**
-	 * Add user to group
-	 *
-	 * @param string $uid the username
-	 * @param string $email users mail address
-	 * @param string $displayname users real name
-	 * @throws \OC\DatabaseException
-	 */
-	private function setInitialUserProfile($uid, $email, $displayname)
-	{
-		$this->setUserPreference($uid, 'settings', 'email', $email);
-
-		$query = $this->query();
-
-		$query
-			->insert('accounts')
-			->values([
-				'uid' => $query->createNamedParameter($uid),
-				'data' => $query->createNamedParameter(json_encode([
-					'displayname' => [
-						'value' => $displayname,
-						'scope' => 'contacts',
-						'verified' => 0
-					],
-					'address' => [
-						'value' => '',
-						'scope' => 'private',
-						'verified' => 0
-					],
-					'website' => [
-						'value' => '',
-						'scope' => 'private',
-						'verified' => 0
-					],
-					'email' => [
-						'value' => $email,
-						'scope' => 'contacts',
-						'verified' => 0
-					],
-					'avatar' => [
-						'scope' => 'contacts',
-					],
-					'phone' => [
-						'value' => '',
-						'scope' => 'private',
-						'verified' => 0
-					],
-					'twitter' => [
-						'value' => '',
-						'scope' => 'private',
-						'verified' => 0
-					],
-				])),
-			])
-			->executeStatement();
-	}
 }
