@@ -7,6 +7,11 @@
 
 namespace OCA\User_ISPConfig;
 
+use OCP\User\Backend\ABackend;
+use OCP\User\Backend\ICheckPasswordBackend;
+use OCP\User\Backend\IGetDisplayNameBackend;
+use OCP\User\Backend\ISetDisplayNameBackend;
+use OCP\User\Backend\ISetPasswordBackend;
 
 /**
  * Base class for external auth implementations that stores users
@@ -21,8 +26,21 @@ namespace OCA\User_ISPConfig;
  * @license  http://www.gnu.org/licenses/agpl AGPL
  * @link     https://github.com/SpicyWeb-de/nextcloud-user-ispconfig
  */
-abstract class Base extends \OC\User\Backend
+abstract class Base extends ABackend implements
+	ICheckPasswordBackend,
+	ISetPasswordBackend,
+	IGetDisplayNameBackend,
+	ISetDisplayNameBackend
 {
+
+	/**
+	 * Backend name shown in the admin user management UI
+	 * @return string
+	 */
+	public function getBackendName()
+	{
+		return 'ISPConfig-Simple';
+	}
 
 	/**
 	 * Shortcut to get an instance of the PSR-3 logger
@@ -93,7 +111,7 @@ abstract class Base extends \OC\User\Backend
 	 * @return string display name or fallback to UID
 	 * @throws \OC\DatabaseException
 	 */
-	public function getDisplayName($uid)
+	public function getDisplayName($uid): string
 	{
 		$query = $this->query();
 
@@ -234,7 +252,7 @@ abstract class Base extends \OC\User\Backend
 	 * @return bool Update successful?
 	 * @throws \OC\DatabaseException
 	 */
-	public function setDisplayName($uid, $displayName)
+	public function setDisplayName(string $uid, string $displayName): bool
 	{
 		if (!$this->userExists($uid))
 			return false;

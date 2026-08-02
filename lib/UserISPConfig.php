@@ -102,7 +102,7 @@ class UserISPConfig extends ISPConfig_SOAP
    * @return bool|string false/UID
    * @throws \OC\DatabaseException
    */
-  public function checkPassword($uid, $password)
+  public function checkPassword(string $uid, string $password)
   {
     if (!class_exists("SoapClient")) {
       $this->logger()->error('ERROR: PHP soap extension is not installed or not enabled', ['app' => 'user_ispconfig']);
@@ -123,7 +123,7 @@ class UserISPConfig extends ISPConfig_SOAP
    * @return bool Successful updated?
    * @throws \OC\DatabaseException
    */
-  public function setPassword($uid, $password)
+  public function setPassword(string $uid, string $password): bool
   {
     $this->connectSoap();
     if($this->useUIDMapping) {
