@@ -15,13 +15,10 @@ class Application extends App implements IBootstrap
 
 	public function boot(IBootContext $context): void
 	{
-		$currentVersion = implode('.', \OCP\Util::getVersion());
-		$isVersionGE27 = version_compare($currentVersion, '27.0.0', '>=');
-
-		if ($isVersionGE27)
-			\OC::$loader->addValidRoot(dirname(__DIR__));
-
-		\OC::$CLASSPATH['OC_User_ISPCONFIG'] = 'user_ispconfig/lib/user_ispconfig.php';
+		// Backward compatibility: existing config.php user_backends entries
+		// reference the backend by its pre-0.6.0 global class name.
+		if (!class_exists('OC_User_ISPCONFIG', false))
+			class_alias(\OCA\User_ISPConfig\UserISPConfig::class, 'OC_User_ISPCONFIG');
 	}
 
 	public function register(IRegistrationContext $context): void
