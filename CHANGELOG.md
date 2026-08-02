@@ -1,5 +1,18 @@
 ## [Unreleased]
 
+## 0.6.0
+- Compatibility with Nextcloud 30 through 34
+- Backend class renamed to OCA\User_ISPConfig\UserISPConfig
+  (old name OC_User_ISPCONFIG still works via a compatibility alias)
+- Modern logging (PSR-3), standard autoloading (PSR-4), removal of all
+  legacy loader and version-detection code
+- Backend now builds on the public user backend interfaces and shows up
+  as "ISPConfig-Simple" in user management
+- User profile, quota, groups and preferences on first login are now set
+  through official Nextcloud services instead of direct database writes
+- User deletion no longer touches Nextcloud core tables (core cleans
+  those itself)
+
 ## 0.5.0
 - Requirement set to NC 27
 - Add Application Constructor for NC >= 27  

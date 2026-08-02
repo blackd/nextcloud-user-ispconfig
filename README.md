@@ -30,6 +30,8 @@ Install it as usual from CLI or admins app list.
 
 ### Prerequisites
 
+Requires Nextcloud 29 to 34.
+
 This authentication method uses ISPConfigs SOAP API. Thus it requires credentials
 for a legitimate remote api user.
 
@@ -56,7 +58,7 @@ $CONFIG = array(
 //  [ ... ],
     'user_backends' => array(
         0 => array(
-            'class' => 'OC_User_ISPCONFIG',
+            'class' => 'OCA\\User_ISPConfig\\UserISPConfig',
             'arguments' =>
                 array(
                     0 => 'https://YOUR.PANEL.FQDN:PORT/remote/index.php',
@@ -68,6 +70,10 @@ $CONFIG = array(
     )
 );
 ```
+
+*Note: installations upgrading from version 0.5.x or older can keep their
+existing configuration — the old class name `OC_User_ISPCONFIG` still works
+through a compatibility alias. The new name is recommended for new setups.*
 
 ### Extended configuration
 
@@ -91,7 +97,7 @@ $CONFIG = array(
 //  [ ... ],
     'user_backends' => array(
         0 => array(
-            'class' => 'OC_User_ISPCONFIG',
+            'class' => 'OCA\\User_ISPConfig\\UserISPConfig',
             'arguments' =>
                 array(
                 //  [ ... ],
@@ -131,7 +137,7 @@ $CONFIG = array(
 //  [ ... ],
     'user_backends' => array(
         0 => array(
-            'class' => 'OC_User_ISPCONFIG',
+            'class' => 'OCA\\User_ISPConfig\\UserISPConfig',
             'arguments' =>
                 array(
                     //  [ ... ],
